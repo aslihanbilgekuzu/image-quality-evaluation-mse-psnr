@@ -1,4 +1,3 @@
-# Integrates image degradation methods with image quality metrics.
-# Runs experiments using different degradation methods and intensity levels.
-# Organizes experimental results into Pandas DataFrames and exports them to CSV.
-# Compares results across noise levels, blur intensities, and JPEG quality settings.
+# Integrates image degradation functions with MSE and PSNR metrics.
+# Runs experiments across selected methods and parameter levels.
+# Collects experiment results in a Pandas DataFrame for dynamic display in the Streamlit dashboard.
