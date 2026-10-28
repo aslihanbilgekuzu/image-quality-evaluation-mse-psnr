@@ -84,27 +84,27 @@ def calculate_psnr(original, processed):
 - Return positive infinity for PSNR when MSE is zero.
 - For 8-bit images, use 255 as the peak pixel value.
 - Do not modify input images.
-
-The public parameter names are `original` and `processed`. A caller can pass variables named `original_image` and `processed_image`; the caller's variable names do not need to match the function's local parameter names.
-
-
 - Use `scikit-image` (`skimage.metrics`) to calculate MSE and PSNR.
 - Use `mean_squared_error()` for MSE calculation.
 - Use `peak_signal_noise_ratio()` for PSNR calculation with `data_range=255`.
 
+The public parameter names are `original` and `processed`. A caller can pass variables named `original_image` and `processed_image`; the caller's variable names do not need to match the function's local parameter names.
 
 ## 5. `src/evaluation.py`
 
 **Owner:** Person 3 — Evaluation and Experiment Management
 
-### Recommended public function
+### Public functions
 
 ```python
 def run_experiment(original_image, method, parameters):
     ...
+
+def run_evaluation(original_image, experiments):
+    ...
 ```
 
-The team should agree on the exact return structure before implementation. Recommended result structure for one experiment:
+### Recommended result structure for one experiment
 
 ```python
 {
@@ -112,8 +112,11 @@ The team should agree on the exact return structure before implementation. Recom
     "parameters": parameters,
     "mse_value": mse_value,
     "psnr_value": psnr_value,
+    "processed_image": processed_image,
 }
 ```
+
+The team should keep the return structure consistent across the evaluation module and its callers. The `processed_image` field allows the dashboard to reuse the processed image when needed.
 
 ### Responsibilities
 
@@ -122,17 +125,17 @@ The team should agree on the exact return structure before implementation. Recom
 - Generate every processed image from the original image, not from a previously degraded result.
 - Collect experiment records and convert them into a Pandas DataFrame named `results_df`.
 - Provide the results DataFrame to the dashboard for dynamic tables and charts.
+- Keep result keys and DataFrame columns consistent with the dashboard's expectations.
 
-**CSV export is out of scope for the current version.** Do not add CSV file-writing functionality unless the team later agrees to expand the project scope.
-
-Example column names:
+Example DataFrame columns:
 
 - `method`
 - `parameters`
 - `mse_value`
 - `psnr_value`
+- `processed_image` (if included in the experiment result structure)
 
-If the team chooses a different return structure or column naming, update this contract and ensure `app.py` uses the same structure.
+**CSV export is out of scope for the current version.** Do not add CSV file-writing functionality unless the team explicitly agrees to expand the project scope.
 
 ## 6. `app.py`
 
@@ -140,25 +143,43 @@ If the team chooses a different return structure or column naming, update this c
 
 ### Responsibilities
 
-- Let users choose one of six sample images or upload their own image.
-- Convert loaded images to RGB NumPy arrays with `uint8` values.
-- Let users select a degradation method and adjust parameters.
-- Call the appropriate degradation function.
-- Call `calculate_mse` and `calculate_psnr`.
-- Display original and processed images, MSE, PSNR, and experiment tables/charts.
+- Let users choose one of six built-in sample images provided by `scikit-image`.
+- Convert selected sample images to RGB NumPy arrays with `uint8` values.
+- Let users select a degradation method and adjust its parameters using interactive controls.
+- Call the appropriate degradation function from `src/image_degradation.py`.
+- Call `calculate_mse()` and `calculate_psnr()` from `src/metrics.py`.
+- Display the original and processed images side by side.
+- Display MSE and PSNR metric cards.
+- Display experiment comparison tables and charts using a Pandas DataFrame.
+- Update images and metrics dynamically when the selected image, degradation method, or parameter values change.
 - Use `original_image`, `processed_image`, `mse_value`, and `psnr_value` as shared result variable names.
-- Display evaluation results dynamically from a Pandas DataFrame.
+- Use the existing module implementations instead of duplicating degradation algorithms or metric formulas.
 
-The dashboard must not reimplement degradation algorithms or metric formulas already implemented in `src/`.
+### Sample image requirements
+
+The dashboard uses built-in sample images from `skimage.data`, such as:
+
+- Astronaut
+- Coffee
+- Chelsea the Cat
+- Rocket
+- Hubble Deep Field
+- Immunohistochemistry
+
+The exact sample list must match the images available in the installed `scikit-image` version.
+
+**User image upload is not part of the current project scope.** The dashboard must use the built-in sample images only.
 
 ## 7. Image Format and OpenCV
 
-Use **RGB** as the standard format passed between project modules.
+Use **RGB** as the standard image format passed between project modules.
 
-- Convert Pillow images to RGB before converting them to NumPy arrays.
+- Convert grayscale sample images to RGB when necessary.
+- Ensure images are represented as `uint8` NumPy arrays with values in the range 0–255.
 - OpenCV may require BGR for certain operations, including JPEG encoding. Convert only at the OpenCV boundary, then convert back to RGB before returning the result.
-- The dashboard's standard image input should be RGB.
+- The dashboard's standard image input must be RGB.
 - Ensure original and processed images have matching shapes before calculating metrics.
+- Do not modify the original image in place during degradation or evaluation.
 
 ## 8. Example of a Consistent Call
 
@@ -175,19 +196,6 @@ psnr_value = calculate_psnr(original_image, processed_image)
 
 Local helper names such as `noise`, `difference`, `encoded_image`, and `max_pixel_value` may differ by module. Shared module interfaces must remain consistent.
 
-## 9. Team Integration Checklist
-
-- [ ] Public function names match this document.
-- [ ] Function calls use valid parameter names.
-- [ ] Degradation functions return RGB `uint8` NumPy arrays.
-- [ ] Original images are not modified in place.
-- [ ] MSE and PSNR functions accept outputs from the degradation module.
-- [ ] Identical images produce MSE = 0 and PSNR = infinity.
-- [ ] Every experiment starts from the original image.
-- [ ] Evaluation result keys and DataFrame columns match what `app.py` expects.
-- [ ] Evaluation results are shown dynamically in the dashboard.
-- [ ] CSV export is not added unless the team explicitly expands the scope.
-- [ ] Any interface changes are reflected in every caller and this document.
-
 ---
+
 **Team rule:** Local variable names may differ; module interfaces must not.

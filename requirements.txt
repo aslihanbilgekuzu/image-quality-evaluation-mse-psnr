@@ -3,5 +3,4 @@ numpy
 opencv-python
 pandas
 matplotlib
-Pillow
 scikit-image
