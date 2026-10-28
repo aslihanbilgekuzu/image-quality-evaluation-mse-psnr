@@ -1,4 +1,3 @@
-```python
 # Integrates image degradation functions with MSE and PSNR metrics.
 # Runs experiments across selected methods and parameter levels.
 # Collects experiment results in a Pandas DataFrame.
@@ -83,4 +82,4 @@ def run_evaluation(original_image, experiments):
     results_df = pd.DataFrame(results)
 
     return results_df
-```
+
