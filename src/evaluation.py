@@ -53,6 +53,7 @@ def run_experiment(original_image, method, parameters):
         "parameters": parameters.copy(),
         "mse_value": mse_value,
         "psnr_value": psnr_value,
+        "processed_image":processed_image
     }
 
 
